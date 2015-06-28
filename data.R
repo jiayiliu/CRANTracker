@@ -1,7 +1,9 @@
 # First time data downloading - might be very large (>1Gb)
+
 firstTime <- function(startdate='2012-10-1'){
+  require(lubridate)
   start <- as.Date(startdate)
-  endday <- as.Date(today())-1 # omit today because the data is not ready
+  endday <- as.Date(today())-5 # omit today because the data is not ready
   all_days <- seq(start, endday, by='day') 
   
   year <- as.POSIXlt(all_days)$year + 1900
@@ -25,11 +27,13 @@ loadCSV <- function(filename){
   data <- tbl_df(data) 
   data %>% transmute(timestamp=ymd_hms(paste(date,time)),
                      size=size,
-                     r_version=as.factor(r_version),
-                     r_arch=as.factor(r_arch),
-                     r_os=as.factor(r_os),
+                     r_version=r_version,
+                     r_arch=r_arch,
+                     r_os=r_os,
                      package=package,
                      version=version,
-                     country=as.factor(country),
-                     ipID=as.factor(ip_id))
+                     country=country,
+                     ipID=ip_id)
 }
+
+firstTime()
