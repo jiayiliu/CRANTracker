@@ -62,7 +62,8 @@ CRANlog.load <- function(filename){
   return(data)
 }
 
-## Load CVS data into dplyr 
+#' Load CVS data into dplyr 
+#' @description Load CVS data into dplyr
 loadCSV <- function(filename){
   require(dplyr)
   require(lubridate)
@@ -80,4 +81,5 @@ loadCSV <- function(filename){
                      ipID=ip_id)
 }
 
-firstTime()
+CRANlog.merge()
+
