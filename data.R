@@ -72,17 +72,27 @@ CRANlog.insert <- function(tablename='logs', first=FALSE){
   require(stringr)
   filenames = list.files(DataPath,'*.csv.gz', full.names = T)
   conn <- dbConnect(MySQL(), dbname='cran', username='jasonliu')
-  dates = str_extract_all(filenames, '\\d{4}-\\d{2}-\\d{2}')  
+  dates = unlist(str_extract_all(filenames, '\\d{4}-\\d{2}-\\d{2}'))
   if (!first){ # only load un-read files
     # load exist file, find the lastest date
-    #olddata = CRANlog.load(filename)
-    #dates = setdiff(strftime(olddata$timestamp,'%Y-%m-%d'), dates)
+    olddata = dbSendQuery(conn, 'SELECT DISTINCT(DATE(timestamp)) FROM %s', tablename)
+    dates = setdiff(dates, olddata$date)
   }
   filenames = paste0(DataPath,'/',dates, '.csv.gz')  
   for (i in filenames){
     if (first){
       logs <- CRANlog.loadCSV(i)
-      dbWriteTable(conn, tablename, logs, row.names=FALSE, overwrite=TRUE)
+      dbWriteTable(conn, tablename, logs, 
+                   field.types=list(timestamp='TIMESTAMP',
+                                    size='BIGINT',
+                                    r_version='VARCHAR(40)',
+                                    r_arch='VARCHAR(40)',
+                                    r_os='VARCHAR(40)',
+                                    package='VARCHAR(40)',
+                                    version='VARCHAR(40)',
+                                    country='VARCHAR(40)',
+                                    ipID='VARCHAR(40)'),
+                   row.names=FALSE, overwrite=TRUE)
       first <- FALSE # Only refresh the table for the first time
     }
     logs <- CRANlog.loadCSV(i)
@@ -106,19 +116,19 @@ CRANlog.loadCSV <- function(filename){
   require(lubridate)
   require(data.table)
   data <- read.csv(gzfile(filename), stringsAsFactors=F)
-##  data <- data.table(data) 
-##  data %>% transmute(timestamp=ymd_hms(paste(date,time)),
-##                     size=size,
-##                     r_version=r_version,
-##                     r_arch=r_arch,
-##                     r_os=r_os,
-##                     package=package,
-##                     version=version,
-##                     country=country,  
-##                     ipID=ip_id)
+  data <- data.table(data) 
+  data %>% transmute(timestamp=ymd_hms(paste(date,time)),
+                     size=size,
+                     r_version=r_version,
+                     r_arch=r_arch,
+                     r_os=r_os,
+                     package=package,
+                     version=version,
+                     country=country,  
+                     ipID=ip_id)
 }
 
 ################### Main Functions ###############
-#CRANlog.download()
+CRANlog.download()
 #CRANlog.merge()
-CRANlog.insert()
+CRANlog.insert(first=TRUE)
